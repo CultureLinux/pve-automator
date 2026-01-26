@@ -22,7 +22,7 @@ On Debian-based distributions, you should be able to install them via:
 
     raise e
 
-DEFAULT_ANSWER_FILE_PATH = pathlib.Path("./default.toml")
+DEFAULT_ANSWER_FILE_PATH = pathlib.Path("./config/default.toml")
 ANSWER_FILE_DIR = pathlib.Path("./answers/")
 
 routes = web.RouteTableDef()

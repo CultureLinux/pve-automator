@@ -13,7 +13,7 @@ un fichier TOML en fonction des adresses MAC envoyées par un client.
 
 ### 1. Créer le venv
 ```bash
-python3 -m venv venv
+python3.11 -m venv venv
 ```
 
 ### 2. Activer le venv
