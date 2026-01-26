@@ -1,0 +1,2 @@
+aiohttp>=3.8
+tomlkit>=0.12
