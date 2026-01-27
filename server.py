@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import datetime
+import aiohttp
 
 from aiohttp import web
 import tomlkit
@@ -16,6 +17,12 @@ from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 BASE_DIR = pathlib.Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 DEFAULT_TEMPLATE = "default.toml.j2"
+
+
+GOTIFY_URL = "https://gotify.clinux.fr"
+GOTIFY_TOKEN = "ACY6E8ZzlYA7VXi"
+
+
 
 # =====================
 # LOGGING
@@ -58,12 +65,21 @@ async def answer(request):
     except Exception as e:
         return web.Response(status=400, text=f"Invalid JSON: {e}")
 
-    logging.info("Request from %s:\n%s",
+    logging.info(
+        "Request from %s:\n%s",
         request.remote,
         json.dumps(payload, indent=2),
     )
 
     mac = extract_mac(payload)
+
+    # 🔔 Gotify : début d'installation
+    await send_gotify_message(
+        title="Installation Proxmox",
+        message=f"Installation démarrée pour la machine {mac}",
+        priority=6,
+    )
+
     template_name = find_template(mac)
     context = build_context(payload, mac)
 
@@ -74,6 +90,30 @@ async def answer(request):
     except Exception as e:
         logging.exception("Template rendering failed")
         return web.Response(status=500, text=str(e))
+
+
+@routes.post("/webhook")
+async def webhook(request: web.Request):
+    try:
+        payload = await request.json()
+    except Exception as e:
+        logging.exception("Webhook: impossible de parser le JSON")
+        return web.json_response({"status": "error", "reason": str(e)}, status=400)
+
+    logging.info("Webhook reçu de %s", request.remote)
+    logging.info(json.dumps(payload, indent=2))
+
+    hostname = payload.get("dmi", {}).get("system", {}).get("name", "PVE inconnu")
+    uuid = payload.get("dmi", {}).get("system", {}).get("uuid", "N/A")
+
+    await send_gotify_message(
+        title="PVE installé",
+        message=f"{hostname} prêt (UUID: {uuid})",
+        priority=7
+    )
+
+    return web.json_response({"status": "ok", "received": True})
+
 
 # =====================
 # HELPERS
@@ -112,6 +152,22 @@ def render_template(template_name, context):
     # Validation TOML
     tomlkit.parse(rendered)
     return rendered
+
+async def send_gotify_message(title: str, message: str, priority: int = 5):
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"{GOTIFY_URL}/message",
+            params={"token": GOTIFY_TOKEN},
+            data={
+                "title": title,
+                "message": message,
+                "priority": priority,
+            },
+            ssl=False  # ⚠️ mets True si ton cert est valide
+        ) as resp:
+            text = await resp.text()
+            logging.info("Gotify response: %s - %s", resp.status, text)
+
 
 # =====================
 # MAIN
