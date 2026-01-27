@@ -7,7 +7,7 @@ un fichier TOML en fonction des adresses MAC envoyées par un client.
 
 - Python >= 3.10
 - pip
-- virtualenv (recommandé)
+- virtualenv
 
 ## 🧪 Création de l’environnement virtuel (venv)
 

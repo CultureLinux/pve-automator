@@ -1,3 +1,4 @@
 aiohttp
 multidict
 tomlkit
+jinja2

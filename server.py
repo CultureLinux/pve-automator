@@ -11,12 +11,7 @@ except ImportError as e:
     import sys
 
     message = """Could not import required packages.
-Please ensure you've installed all necessary packages first!
-
-On Debian-based distributions, you should be able to install them via:
-
-\tapt update
-\tapt install python3-aiohttp python3-tomlkit"""
+Please ensure to read the file README.md"""
 
     print(message, file=sys.stderr)
 
