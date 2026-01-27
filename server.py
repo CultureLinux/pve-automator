@@ -1,109 +1,125 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 import pathlib
+import datetime
 
-try:
-    import tomlkit
-    from aiohttp import web
-except ImportError as e:
-    import sys
+from aiohttp import web
+import tomlkit
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-    message = """Could not import required packages.
-Please ensure to read the file README.md"""
+# =====================
+# PATHS
+# =====================
 
-    print(message, file=sys.stderr)
+BASE_DIR = pathlib.Path(__file__).parent
+TEMPLATES_DIR = BASE_DIR / "templates"
+DEFAULT_TEMPLATE = "default.toml.j2"
 
-    raise e
+# =====================
+# LOGGING
+# =====================
 
-DEFAULT_ANSWER_FILE_PATH = pathlib.Path("./config/default.toml")
-ANSWER_FILE_DIR = pathlib.Path("./answers/")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+# =====================
+# JINJA
+# =====================
+
+env = Environment(
+    loader=FileSystemLoader(TEMPLATES_DIR),
+    autoescape=False,
+)
+
+# =====================
+# AIOHTTP
+# =====================
 
 routes = web.RouteTableDef()
 
-
-@routes.post("/answer")
-async def answer(request: web.Request):
-    try:
-        request_data = json.loads(await request.text())
-    except json.JSONDecodeError as e:
-        return web.Response(
-            status=400,
-            text=f"Internal Server Error: failed to parse request contents: {e}",
-        )
-
-    logging.info(
-        f"Request data for peer '{request.remote}':\n"
-        f"{json.dumps(request_data, indent=1)}"
+@routes.get("/")
+async def index(request):
+    return web.json_response(
+        {
+            "status": "ok",
+            "service": "pve-automator",
+            "time": datetime.datetime.utcnow().isoformat() + "Z",
+        }
     )
 
+@routes.post("/answer")
+async def answer(request):
     try:
-        answer = create_answer(request_data)
-
-        logging.info(f"Answer file for peer '{request.remote}':\n{answer}")
-
-        return web.Response(text=answer)
+        payload = await request.json()
     except Exception as e:
-        logging.exception(f"failed to create answer: {e}")
-        return web.Response(status=500, text=f"Internal Server Error: {e}")
+        return web.Response(status=400, text=f"Invalid JSON: {e}")
 
+    logging.info("Request from %s:\n%s",
+        request.remote,
+        json.dumps(payload, indent=2),
+    )
 
-def create_answer(request_data: dict) -> str:
-    with open(DEFAULT_ANSWER_FILE_PATH) as file:
-        answer = tomlkit.parse(file.read())
+    mac = extract_mac(payload)
+    template_name = find_template(mac)
+    context = build_context(payload, mac)
 
-    for nic in request_data.get("network_interfaces", []):
-        if "mac" not in nic:
-            continue
+    try:
+        rendered = render_template(template_name, context)
+        logging.info("Using template: %s", template_name)
+        return web.Response(text=rendered)
+    except Exception as e:
+        logging.exception("Template rendering failed")
+        return web.Response(status=500, text=str(e))
 
-        answer_mac = lookup_answer_for_mac(nic["mac"])
-        if answer_mac is not None:
-            answer = answer_mac
+# =====================
+# HELPERS
+# =====================
 
-    return tomlkit.dumps(answer)
+def extract_mac(payload):
+    for nic in payload.get("network_interfaces", []):
+        mac = nic.get("mac")
+        if mac:
+            return mac.lower()
+    return None
 
-
-def lookup_answer_for_mac(mac: str) -> tomlkit.TOMLDocument | None:
-    mac = mac.lower()
-
-    for filename in ANSWER_FILE_DIR.glob("*.toml"):
-        if filename.name.lower().startswith(mac):
-            with open(filename) as mac_file:
-                return tomlkit.parse(mac_file.read())
-
-
-def assert_default_answer_file_exists():
-    if not DEFAULT_ANSWER_FILE_PATH.exists():
-        raise RuntimeError(
-            f"Default answer file '{DEFAULT_ANSWER_FILE_PATH}' does not exist"
-        )
-
-
-def assert_default_answer_file_parseable():
-    with open(DEFAULT_ANSWER_FILE_PATH) as file:
+def find_template(mac):
+    if mac:
+        candidate = f"mac/{mac}.toml.j2"
         try:
-            tomlkit.parse(file.read())
-        except Exception as e:
-            raise RuntimeError(
-                "Could not parse default answer file "
-                f"'{DEFAULT_ANSWER_FILE_PATH}':\n{e}"
-            )
+            env.get_template(candidate)
+            return candidate
+        except TemplateNotFound:
+            pass
+    return DEFAULT_TEMPLATE
 
+def build_context(payload, mac):
+    return {
+        "mac": mac or "unknown",
+        "hostname": f"pve-{mac.replace(':','')[:6]}" if mac else "pve-node",
+        "timezone": "Europe/Paris",
+        "keyboard": "fr",
+        "country": "FR",
+    }
 
-def assert_answer_dir_exists():
-    if not ANSWER_FILE_DIR.exists():
-        raise RuntimeError(f"Answer file directory '{ANSWER_FILE_DIR}' does not exist")
+def render_template(template_name, context):
+    template = env.get_template(template_name)
+    rendered = template.render(context)
 
+    # Validation TOML
+    tomlkit.parse(rendered)
+    return rendered
+
+# =====================
+# MAIN
+# =====================
 
 if __name__ == "__main__":
-    assert_default_answer_file_exists()
-    assert_answer_dir_exists()
-    assert_default_answer_file_parseable()
-
     app = web.Application()
-
-    logging.basicConfig(level=logging.INFO)
-
     app.add_routes(routes)
+
+    logging.info("Server listening on 0.0.0.0:8000")
     web.run_app(app, host="0.0.0.0", port=8000)

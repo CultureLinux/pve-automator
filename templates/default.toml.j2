@@ -1,0 +1,23 @@
+# default.toml - fallback
+
+[global]
+keyboard = "fr"
+country = "fr"
+timezone = "Europe/Paris"
+fqdn = "pve-default"
+root-password = "ChangeMe123!"
+
+[network]
+source = "from-dhcp"
+
+[disk-setup]
+filesystem = "ext4"
+disk-list = ["sda"]
+
+[post-install]
+script = """
+curl -X POST https://gotify.domain.local/message \
+  -H "X-Gotify-Key: TOKEN" \
+  -F "title=PVE installé (default)" \
+  -F "message=MAC {{ primary_mac }}"
+"""
