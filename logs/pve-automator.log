@@ -1,0 +1,8 @@
+2026-01-28 07:47:42,629 [INFO] root Gotify enabled: url=https://gotify.clinux.fr token=ACY6****
+2026-01-28 07:47:42,629 [INFO] root Server listening on 0.0.0.0:8000
+2026-01-28 07:47:51,599 [INFO] route.webhook POST /webhook from 127.0.0.1
+2026-01-28 07:47:51,600 [INFO] route.webhook PVE ready: hostname=unknown uuid=N/A
+2026-01-28 07:47:51,776 [INFO] root Gotify response: 200 - {"id":12,"appid":1,"message":"unknown prêt (UUID: N/A)","title":"PVE installé","priority":7,"date":"2026-01-28T06:47:51.745739996Z"}
+2026-01-28 07:47:51,777 [INFO] aiohttp.access 127.0.0.1 [28/Jan/2026:07:47:51 +0100] "POST /webhook HTTP/1.0" 200 175 "-" "bruno-runtime/3.0.2"
+2026-01-28 07:48:04,338 [INFO] route.index GET / from 127.0.0.1
+2026-01-28 07:48:04,338 [INFO] aiohttp.access 127.0.0.1 [28/Jan/2026:07:48:04 +0100] "GET / HTTP/1.0" 200 242 "-" "bruno-runtime/3.0.2"

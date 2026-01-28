@@ -2,3 +2,4 @@ aiohttp
 multidict
 tomlkit
 jinja2
+python-dotenv
