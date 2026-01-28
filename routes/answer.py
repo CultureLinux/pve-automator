@@ -25,9 +25,25 @@ async def answer(request):
     template_name = find_template(mac)
     logger.info("Template selected: %s", template_name)
 
+
+    # construction du message
+    network_info = "\n".join(
+        f"{nic['link']} -> {nic['mac']}" for nic in payload.get("network_interfaces", [])
+    )
+
+    message = (
+        f"🖥️ Machine: {payload.get('dmi', {}).get('system', {}).get('name', 'unknown')}\n"
+        f"🆔 UUID: {payload.get('dmi', {}).get('system', {}).get('uuid', 'N/A')}\n"
+        f"🔢 Serial: {payload.get('dmi', {}).get('system', {}).get('serial', 'N/A')}\n"
+        f"💻 Modèle/SKU: {payload.get('dmi', {}).get('system', {}).get('sku', 'N/A')}\n"
+        f"🌐 Interfaces:\n{network_info}\n"
+        f"💿 ISO release: {payload.get('iso', {}).get('release', 'unknown')}\n"
+        f"📄 Template choisi: {template_name}\n"
+    )
+
     await send_gotify_message(
         title="Installation Proxmox",
-        message=f"Installation démarrée pour {mac}",
+        message=message,
         priority=6,
     )
 
