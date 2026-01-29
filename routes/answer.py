@@ -30,11 +30,16 @@ async def answer(request):
     network_info = "\n".join(
         f"{nic['link']} -> {nic['mac']}" for nic in payload.get("network_interfaces", [])
     )
-    ip_local = request.remote
 
+    real_ip = (
+        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        or request.headers.get("X-Real-IP")
+        or request.remote
+    )
+    
     message = (
         f"🖥️ Machine: {payload.get('dmi', {}).get('system', {}).get('name', 'unknown')}\n"
-        f"🌐 IP locale: {ip_local}\n"
+        f"🌐 IP locale: {real_ip}\n"
         f"🆔 UUID: {payload.get('dmi', {}).get('system', {}).get('uuid', 'N/A')}\n"
         f"🔢 Serial: {payload.get('dmi', {}).get('system', {}).get('serial', 'N/A')}\n"
         f"💻 Modèle/SKU: {payload.get('dmi', {}).get('system', {}).get('sku', 'N/A')}\n"
