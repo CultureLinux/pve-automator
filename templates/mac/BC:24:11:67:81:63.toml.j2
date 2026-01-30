@@ -1,0 +1,23 @@
+# Machine proxmox5
+
+[global]
+keyboard = "fr"
+country = "fr"
+timezone = "Europe/Paris"
+fqdn = "pinp.local.clinux.fr"
+mailto = "dev@clinux.fr"
+root-password = "UltraSecret!"
+root-ssh-keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1bRjvV4SBhuIS2myssnSzhbanJ0+zAGt7XteJE0hQ0 clinux@rocky9.local"
+]
+reboot-mode = "power-off"
+
+[network]
+source = "from-dhcp"
+
+[disk-setup]
+filesystem = "ext4"
+disk-list = ["sda"]
+
+[post-installation-webhook]
+url = "https://pve-automator.local.clinux.fr:8000/webhook"
