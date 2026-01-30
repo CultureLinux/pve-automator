@@ -1,6 +1,6 @@
 # PVE-AUTOMATOR
 
-Petit serveur HTTP en Python basé sur **aiohttp** permettant de retourner
+Petit serveur HTTP en Python basé sur **aiohttp** sur le port 8000 permettant de retourner
 un fichier TOML en fonction des adresses MAC envoyées par un client.
 
 ## 🧰 Préparation de l'iso proxmox
@@ -30,7 +30,7 @@ proxmox-auto-install-assistant prepare-iso \
 
 ```bash
 lsblk
-# dd if=/root/proxmox-ve-auto_9.1-1.iso of=/dev/sdd bs=4M status=progress oflag=sync
+# dd if=proxmox-ve-auto_9.1-1.iso of=/dev/sdd bs=4M status=progress oflag=sync
 ```
 
 ### 
@@ -57,4 +57,18 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+
+### 4. Edition des templates
+
+* `templates/default.toml.j2`
+* `templates/mac/aa:bb:cc:dd:ee:ff.toml.j2`
+
+### 5. Démarrage du serveur
+
+❗❗❗ Attention un proxy frontal avec certificat valide est nécessaire
+
+```bash
+./app.py
+```
+
 

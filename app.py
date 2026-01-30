@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import pathlib
 from dotenv import load_dotenv
 
@@ -27,5 +28,7 @@ app.add_routes(index.routes)
 app.add_routes(answer.routes)
 app.add_routes(webhook.routes)
 
-logging.info("Server listening on 0.0.0.0:8000")
-web.run_app(app, host="0.0.0.0", port=8000)
+LISTENER_PORT = int(os.getenv("LISTENER_PORT"))
+
+logging.info(f"Server listening on 0.0.0.0:{LISTENER_PORT}")
+web.run_app(app, host="0.0.0.0", port=LISTENER_PORT)
