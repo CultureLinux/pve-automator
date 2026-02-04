@@ -1,5 +1,9 @@
 # PVE-AUTOMATOR
 
+<p align="center">
+  <img src="https://github.com/CultureLinux/pve-automator/blob/main/images/pve-automator.png" alt="pve-automator"/>
+</p>
+
 Petit serveur HTTP/HTTPS en Python basé sur **aiohttp** permettant de retourner un fichier **TOML** en fonction des adresses **MAC** envoyées par un client (Proxmox Auto Install).
 
 Le service peut fonctionner :
