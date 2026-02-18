@@ -1,8 +1,17 @@
+import json
+from dotenv import dotenv_values
+
 import pathlib
 import tomlkit
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 BASE_DIR = pathlib.Path(__file__).parents[1]
+
+env_vars = dotenv_values(BASE_DIR / ".env")
+proxmox_email = env_vars.get("PROXMOX_EMAIL")
+proxmox_password = env_vars.get("PROXMOX_PASSWORD")
+proxmox_ssh_keys = json.loads(env_vars.get("PROXMOX_SSH_KEYS", "[]"))
+
 TEMPLATES_DIR = BASE_DIR / "templates"
 DEFAULT_TEMPLATE = "default.toml.j2"
 
@@ -28,10 +37,23 @@ def build_context(payload, mac):
         "timezone": "Europe/Paris",
         "keyboard": "fr",
         "country": "FR",
+        "proxmox_email" : proxmox_email,
+        "proxmox_password": proxmox_password,
+        "proxmox_ssh_keys": proxmox_ssh_keys,
     }
 
 def render_template(template_name, context):
     template = env.get_template(template_name)
+
+
     rendered = template.render(context)
+    
+        
+    
+    print("----- RENDERED -----")
+    print(rendered)
+    print("--------------------")
+
+    
     tomlkit.parse(rendered)
     return rendered
